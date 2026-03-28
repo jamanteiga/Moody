@@ -2,7 +2,7 @@
   "name": "Diagrama de Moody",
   "short_name": "Moody",
   "description": "Factor de fricción y diagrama de Moody para flujo en tuberías",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f2f2f7",
   "theme_color": "#f2f2f7",
