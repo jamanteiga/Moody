@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f2f2f7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Moody">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Diagrama de Moody</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-logo">📈 <span>Moody</span></div>
+  <div class="hdr-sub">Factor de fricción</div>
+  <div class="hdr-pill def" id="regimePill">—</div>
+</header>
+
+<!-- PAGE: DIAGRAMA -->
+<div class="page active" data-page="diagrama">
+  <div class="card" style="margin-bottom:12px">
+    <canvas id="moodyCvs"></canvas>
+    <div style="padding:7px 14px;font-size:11px;color:var(--muted);text-align:center;background:var(--sf2);border-top:1px solid var(--bd2)">
+      Toca el diagrama para leer Re y f · Usa los sliders para calcular
+    </div>
+  </div>
+
+  <!-- Sliders entrada -->
+  <div class="card">
+    <div class="sl-group">
+      <div class="sl-row">
+        <div class="sl-hdr">
+          <span class="sl-lbl">Diámetro D</span>
+          <span class="sl-val" id="vD" style="color:var(--accent)">— mm</span>
+        </div>
+        <input type="range" id="slD" min="10" max="1000" step="5" value="100">
+      </div>
+      <div class="sl-row">
+        <div class="sl-hdr">
+          <span class="sl-lbl">Velocidad v</span>
+          <span class="sl-val" id="vV" style="color:var(--purple)">— m/s</span>
+        </div>
+        <input type="range" id="slV" min="0.05" max="10" step="0.05" value="1.0">
+      </div>
+      <div class="sl-row">
+        <div class="sl-hdr">
+          <span class="sl-lbl">Rugosidad ε</span>
+          <span class="sl-val" id="vEps" style="color:var(--orange)">— mm</span>
+        </div>
+        <input type="range" id="slEps" min="-6" max="-1" step="0.05" value="-3.336">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: RESULTADOS -->
+<div class="page" data-page="resultados">
+
+  <div class="sec">Punto de operación</div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="rg">
+      <div class="rc">
+        <div class="rl">Reynolds Re</div>
+        <div class="rv" id="rRe" style="font-size:15px">—</div>
+        <div class="ru">adimensional</div>
+      </div>
+      <div class="rc">
+        <div class="rl">f Colebrook-White</div>
+        <div class="rv" id="rF" style="color:var(--accent)">—</div>
+        <div class="ru">Darcy</div>
+      </div>
+      <div class="rc" style="border-top:1px solid var(--bd2)">
+        <div class="rl">ε/D rugosidad rel.</div>
+        <div class="rv" id="rEpD" style="font-size:14px">—</div>
+        <div class="ru">adimensional</div>
+      </div>
+      <div class="rc" style="border-top:1px solid var(--bd2)">
+        <div class="rl">Velocidad</div>
+        <div class="rv" id="rVel">—</div>
+        <div class="ru">m/s</div>
+      </div>
+      <div class="rc" style="border-top:1px solid var(--bd2)">
+        <div class="rl">Caudal Q</div>
+        <div class="rv" id="rQ" style="font-size:14px">—</div>
+        <div class="ru">L/s</div>
+      </div>
+      <div class="rc" style="border-top:1px solid var(--bd2)">
+        <div class="rl">Régimen</div>
+        <div class="rv" id="rReg" style="font-size:13px">—</div>
+        <div class="ru">&nbsp;</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">Pérdida de carga (Darcy-Weisbach)</div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="rg">
+      <div class="rc">
+        <div class="rl">hf por metro</div>
+        <div class="rv" id="rHfM">—</div>
+        <div class="ru">m/m</div>
+      </div>
+      <div class="rc">
+        <div class="rl">hf (L = 100 m)</div>
+        <div class="rv" id="rHf100">—</div>
+        <div class="ru">m columna</div>
+      </div>
+      <div class="rc" style="border-top:1px solid var(--bd2)">
+        <div class="rl">ΔP (L = 100 m)</div>
+        <div class="rv" id="rDP" style="font-size:14px">—</div>
+        <div class="ru">kPa</div>
+      </div>
+      <div class="rc" style="border-top:1px solid var(--bd2)">
+        <div class="rl">f·L/D</div>
+        <div class="rv" id="rFLD">—</div>
+        <div class="ru">adimensional</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">Comparativa de correlaciones</div>
+  <div class="card" style="margin-bottom:14px;overflow-x:auto">
+    <table class="cmp-tbl">
+      <thead><tr>
+        <th>Correlación</th><th>f Darcy</th><th>Error vs C-W</th><th>Tipo</th>
+      </tr></thead>
+      <tbody id="cmpBody">
+        <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Ajusta los parámetros</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PAGE: DATOS -->
+<div class="page" data-page="datos">
+
+  <div class="sec">Material de la tubería</div>
+  <div class="card sel-card" style="margin-bottom:14px">
+    <div>
+      <div class="field-lbl">Seleccionar material</div>
+      <select class="ios-sel" id="selMat" onchange="onMat()"></select>
+    </div>
+    <div id="epsCustomRow" style="display:none">
+      <div class="field-lbl">Rugosidad absoluta ε [mm]</div>
+      <input class="ios-inp" type="number" id="epsCustom" step="0.001" value="0.046" oninput="onEpsCustom()">
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding-top:4px">
+      <span id="matEpsLabel">ε = —</span>
+      <span id="matEpsRel">ε/D = —</span>
+    </div>
+  </div>
+
+  <div class="sec">Fluido</div>
+  <div class="card sel-card" style="margin-bottom:14px">
+    <div>
+      <div class="field-lbl">Seleccionar fluido</div>
+      <select class="ios-sel" id="selFluid" onchange="onFluid()"></select>
+    </div>
+    <div id="fluidCustom" style="display:none">
+      <div class="field-row">
+        <div>
+          <div class="field-lbl">ρ densidad [kg/m³]</div>
+          <input class="ios-inp" type="number" id="rhoCustom" value="998" oninput="update()">
+        </div>
+        <div>
+          <div class="field-lbl">ν viscosidad [m²/s]</div>
+          <input class="ios-inp" type="number" id="nuCustom" step="1e-7" value="1.004e-6" oninput="update()">
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding-top:4px">
+      <span id="fluidRhoLabel">ρ = —</span>
+      <span id="fluidNuLabel">ν = —</span>
+    </div>
+  </div>
+
+  <div class="sec">Longitud del tramo</div>
+  <div class="card sel-card" style="margin-bottom:14px">
+    <div>
+      <div class="field-lbl">Longitud L [m]</div>
+      <input class="ios-inp" type="number" id="lengthInp" value="100" oninput="update()">
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: INFO -->
+<div class="page" data-page="info">
+  <div class="sec">Zonas del diagrama</div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="info-row">
+      <span class="ik">🟢 Laminar</span>
+      <span class="iv">Re &lt; 2 300 · f = 64/Re</span>
+    </div>
+    <div class="info-row">
+      <span class="ik">🟠 Transición</span>
+      <span class="iv">2 300 &lt; Re &lt; 4 000</span>
+    </div>
+    <div class="info-row">
+      <span class="ik">🔵 Turbulento</span>
+      <span class="iv">Re &gt; 4 000</span>
+    </div>
+    <div class="info-row">
+      <span class="ik">Zona rugosidad completa</span>
+      <span class="iv">f independiente de Re</span>
+    </div>
+  </div>
+
+  <div class="sec">Correlaciones</div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="info-title">Colebrook-White (1939) — referencia</div>
+    <div class="info-body">1/√f = −2·log₁₀(ε/D/3.7 + 2.51/(Re·√f))<br>Implícita, requiere iteración. Error &lt; 0.5%.</div>
+    <div class="info-title">Swamee-Jain (1976)</div>
+    <div class="info-body">f = 0.25 / [log₁₀(ε/D/3.7 + 5.74/Re⁰·⁹)]²<br>Explícita. Error &lt; 3% para Re: 5000–10⁸.</div>
+    <div class="info-title">Haaland (1983)</div>
+    <div class="info-body">1/√f = −1.8·log₁₀[(ε/D/3.7)^1.11 + 6.9/Re]<br>Explícita. Error &lt; 2%.</div>
+    <div class="info-title">Serghides (1984)</div>
+    <div class="info-body">Explícita de tres pasos. Error &lt; 0.003%.</div>
+    <div class="info-title">Churchill (1977)</div>
+    <div class="info-body">Válida para todo Re, incluyendo transición.</div>
+  </div>
+
+  <div class="sec">Darcy-Weisbach</div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="info-body" style="padding-top:14px">
+      hf = f · (L/D) · v²/(2g)<br><br>
+      donde:<br>
+      • f = factor de fricción de Darcy<br>
+      • L = longitud del tramo [m]<br>
+      • D = diámetro interior [m]<br>
+      • v = velocidad media [m/s]<br>
+      • g = 9.81 m/s²
+    </div>
+  </div>
+
+  <div class="sec">Rugosidades típicas</div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="info-row"><span class="ik">PVC / Cobre / Vidrio</span><span class="iv">~0.0015 mm</span></div>
+    <div class="info-row"><span class="ik">Acero comercial</span><span class="iv">0.046 mm</span></div>
+    <div class="info-row"><span class="ik">Acero galvanizado</span><span class="iv">0.15 mm</span></div>
+    <div class="info-row"><span class="ik">Hierro fundido</span><span class="iv">0.26 mm</span></div>
+    <div class="info-row"><span class="ik">Hormigón</span><span class="iv">0.3 – 3 mm</span></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" data-nav="diagrama"><span class="ico">📈</span><span>Diagrama</span></button>
+  <button class="nav-btn" data-nav="resultados"><span class="ico">🔢</span><span>Resultados</span></button>
+  <button class="nav-btn" data-nav="datos"><span class="ico">⚙️</span><span>Datos</span></button>
+  <button class="nav-btn" data-nav="info"><span class="ico">ℹ️</span><span>Info</span></button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { calcState, MATERIALS, FLUIDS, headLossDW, flowRate, velocity } from './js/engine.js';
+import { MoodyChart } from './js/chart.js';
+
+// ── CHART ─────────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('moodyCvs');
+const chart  = new MoodyChart(canvas, onChartHover);
+chart.draw(null);
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let D   = 0.100;           // m
+let v   = 1.0;             // m/s
+let eps = 0.046e-3;        // m (acero comercial)
+let nu  = 1.004e-6;        // m²/s
+let rho = 998.2;           // kg/m³
+let L   = 100;             // m
+let state = null;
+
+// ── SLIDERS ──────────────────────────────────────────────────────────────────
+const slD   = document.getElementById('slD');
+const slV   = document.getElementById('slV');
+const slEps = document.getElementById('slEps');
+
+function trackColor(sl, color) {
+  const pct = (sl.value - sl.min) / (sl.max - sl.min) * 100;
+  sl.style.background = `linear-gradient(to right,${color} ${pct}%,#e5e5ea ${pct}%)`;
+}
+
+function syncSliders() {
+  D   = parseFloat(slD.value) / 1000;
+  v   = parseFloat(slV.value);
+  eps = Math.pow(10, parseFloat(slEps.value));
+  document.getElementById('vD').textContent   = `${(D*1000).toFixed(0)} mm`;
+  document.getElementById('vV').textContent   = `${v.toFixed(2)} m/s`;
+  document.getElementById('vEps').textContent = `${(eps*1000).toExponential(2)} mm`;
+  trackColor(slD,   '#007aff');
+  trackColor(slV,   '#5856d6');
+  trackColor(slEps, '#ff9500');
+}
+
+slD.addEventListener('input',   () => { syncSliders(); update(); });
+slV.addEventListener('input',   () => { syncSliders(); update(); });
+slEps.addEventListener('input', () => { syncSliders(); update(); });
+
+// ── UPDATE ────────────────────────────────────────────────────────────────────
+function fmt(n, d=3) { return n != null && isFinite(n) ? n.toFixed(d) : '—'; }
+function fmtSci(n)   { return n != null && isFinite(n) ? (n < 0.01 ? n.toExponential(3) : n.toFixed(5)) : '—'; }
+
+function update() {
+  L   = parseFloat(document.getElementById('lengthInp').value) || 100;
+  const Re    = Math.abs(v) * D / nu;
+  const eps_D = eps / D;
+
+  state = calcState({ Re, eps_D, L, D, nu, rho, v, Q: flowRate(v, D) });
+
+  // Regime pill
+  const pill = document.getElementById('regimePill');
+  pill.textContent = state.regime.label;
+  pill.className   = `hdr-pill ${state.regime.short.toLowerCase()}`;
+
+  // Results page
+  document.getElementById('rRe').textContent   = Re.toExponential(3);
+  document.getElementById('rF').textContent    = fmtSci(state.f_cw);
+  document.getElementById('rEpD').textContent  = eps_D.toExponential(3);
+  document.getElementById('rVel').textContent  = fmt(state.vel, 3);
+  document.getElementById('rQ').textContent    = fmt(state.q * 1000, 3);
+  document.getElementById('rReg').textContent  = state.regime.label;
+
+  const hfM   = state.f_cw * v*v / (D * 2 * 9.81);
+  const hf100 = hfM * L;
+  const dP100 = hf100 * rho * 9.81 / 1000;
+  const fLD   = state.f_cw * L / D;
+  document.getElementById('rHfM').textContent   = fmt(hfM, 5);
+  document.getElementById('rHf100').textContent = fmt(hf100, 3);
+  document.getElementById('rDP').textContent    = fmt(dP100, 2);
+  document.getElementById('rFLD').textContent   = fmt(fLD, 2);
+
+  // Comparativa
+  const corrs = [
+    { name: 'Colebrook-White', f: state.f_cw,  err: 0,             tipo: 'Implícita',   ref: true },
+    { name: 'Serghides',       f: state.f_se,  err: state.err_se,  tipo: 'Explícita'  },
+    { name: 'Haaland',         f: state.f_ha,  err: state.err_ha,  tipo: 'Explícita'  },
+    { name: 'Swamee-Jain',     f: state.f_sj,  err: state.err_sj,  tipo: 'Explícita'  },
+    { name: 'Churchill',       f: state.f_ch,  err: state.err_ch,  tipo: 'Universal'  },
+  ];
+  document.getElementById('cmpBody').innerHTML = corrs.map(c => `
+    <tr${c.ref?' class="best"':''}>
+      <td style="font-weight:${c.ref?'700':'500'}">${c.name}</td>
+      <td>${fmtSci(c.f)}</td>
+      <td>${c.ref ? '<span class="err-pill err-ok">Referencia</span>' : errPill(c.err)}</td>
+      <td style="color:var(--muted);font-family:'DM Sans',sans-serif">${c.tipo}</td>
+    </tr>
+  `).join('');
+
+  // Datos tab — labels
+  document.getElementById('matEpsLabel').textContent = `ε = ${(eps*1000).toExponential(2)} mm`;
+  document.getElementById('matEpsRel').textContent   = `ε/D = ${eps_D.toExponential(3)}`;
+  document.getElementById('fluidRhoLabel').textContent = `ρ = ${rho} kg/m³`;
+  document.getElementById('fluidNuLabel').textContent  = `ν = ${nu.toExponential(3)} m²/s`;
+
+  // Chart point
+  chart.draw({ Re, f: state.f_cw, eps_D });
+}
+
+function errPill(e) {
+  const cls = e < 1 ? 'err-ok' : e < 3 ? 'err-warn' : 'err-bad';
+  return `<span class="err-pill ${cls}">${e.toFixed(3)}%</span>`;
+}
+
+// ── CHART HOVER ───────────────────────────────────────────────────────────────
+function onChartHover({ Re, f }) {
+  // Snap Re to nearest slider position
+  v = Re * nu / D;
+  slV.value = Math.min(Math.max(v, parseFloat(slV.min)), parseFloat(slV.max));
+  syncSliders();
+  update();
+}
+
+// ── MATERIALS ─────────────────────────────────────────────────────────────────
+const selMat = document.getElementById('selMat');
+MATERIALS.forEach((m, i) => {
+  const opt = document.createElement('option'); opt.value = i; opt.textContent = m.name; selMat.appendChild(opt);
+});
+
+window.onMat = function() {
+  const m = MATERIALS[parseInt(selMat.value)];
+  if (m.eps !== null) {
+    eps = m.eps;
+    // Sync slider: log10(eps)
+    slEps.value = Math.log10(eps);
+    document.getElementById('epsCustomRow').style.display = 'none';
+  } else {
+    document.getElementById('epsCustomRow').style.display = 'block';
+  }
+  syncSliders(); update();
+};
+
+window.onEpsCustom = function() {
+  const val = parseFloat(document.getElementById('epsCustom').value);
+  if (val > 0) { eps = val / 1000; slEps.value = Math.log10(eps); syncSliders(); update(); }
+};
+
+// ── FLUIDS ────────────────────────────────────────────────────────────────────
+const selFluid = document.getElementById('selFluid');
+FLUIDS.forEach((f, i) => {
+  const opt = document.createElement('option'); opt.value = i; opt.textContent = f.name; selFluid.appendChild(opt);
+});
+
+window.onFluid = function() {
+  const f = FLUIDS[parseInt(selFluid.value)];
+  if (f.nu !== null) {
+    nu = f.nu; rho = f.rho;
+    document.getElementById('fluidCustom').style.display = 'none';
+  } else {
+    document.getElementById('fluidCustom').style.display = 'block';
+    nu  = parseFloat(document.getElementById('nuCustom').value)  || nu;
+    rho = parseFloat(document.getElementById('rhoCustom').value) || rho;
+  }
+  update();
+};
+
+document.getElementById('rhoCustom').addEventListener('input', () => { rho = parseFloat(document.getElementById('rhoCustom').value)||rho; update(); });
+document.getElementById('nuCustom').addEventListener('input',  () => { nu  = parseFloat(document.getElementById('nuCustom').value) ||nu;  update(); });
+document.getElementById('lengthInp').addEventListener('input', update);
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => {
+  const t = btn.dataset.nav;
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page===t));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b===btn));
+}));
+
+// ── RESIZE ────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => { chart.resize(); chart.draw(state ? { Re: state.vel*D/nu, f: state.f_cw } : null); });
+
+// ── SW ────────────────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+syncSliders();
+update();
+</script>
+</body>
+</html>
