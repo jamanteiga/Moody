@@ -4,443 +4,545 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f2f2f7">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Moody">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>Diagrama de Moody</title>
-  <link rel="stylesheet" href="css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'DM Sans', sans-serif; }
+    html, body {
+      width: 100%;
+      height: 100vh;
+      background-color: #f2f2f7;
+      overflow: hidden;
+    }
+    .app-container {
+      width: 100vw;
+      height: 100vh;
+      background-color: #f2f2f7;
+      display: flex;
+      flex-direction: column;
+    }
+    .hdr {
+      background: #ffffff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #c6c6c8;
+      flex-shrink: 0;
+    }
+    .hdr-left { display: flex; align-items: center; gap: 16px; }
+    .hdr-logo { font-weight: 700; font-size: 16px; color: #1c1c1e; display: flex; align-items: center; gap: 6px; }
+    .friction-display {
+      background: #e5e5ea;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #3a3a3c;
+    }
+    .friction-display span { color: #007aff; font-family: 'DM Mono', monospace; font-size: 14px; }
+    .close-btn {
+      background: #ff3b30;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .close-btn:hover { background: #d70015; }
+
+    .main-content {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .card-canvas {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 8px;
+      border: 1px solid #c6c6c8;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      flex: 1;
+      background: #fafafa;
+      border-radius: 6px;
+      overflow: hidden;
+      min-height: 0;
+    }
+    canvas#moodyCvs {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    .tooltip {
+      position: absolute;
+      background: rgba(28, 28, 30, 0.9);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      pointer-events: none;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .controls-card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px 16px;
+      border: 1px solid #c6c6c8;
+      flex-shrink: 0;
+    }
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #8e8e93;
+      text-transform: uppercase;
+    }
+    .input-row {
+      display: flex;
+      gap: 6px;
+    }
+    input, select {
+      padding: 7px 10px;
+      border: 1px solid #c6c6c8;
+      border-radius: 6px;
+      font-size: 13px;
+      background: #fff;
+    }
+    input { flex: 1; font-family: 'DM Mono', monospace; }
+    select { background: #e5e5ea; color: #1c1c1e; font-weight: 500; cursor: pointer; width: 100%; }
+  </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header class="hdr">
-  <div class="hdr-logo">📈 <span>Moody</span></div>
-  <div class="hdr-sub">Factor de fricción</div>
-  <div class="hdr-pill def" id="regimePill">—</div>
-</header>
-
-<!-- PAGE: DIAGRAMA -->
-<div class="page active" data-page="diagrama">
-  <div class="card" style="margin-bottom:12px">
-    <canvas id="moodyCvs"></canvas>
-    <div style="padding:7px 14px;font-size:11px;color:var(--muted);text-align:center;background:var(--sf2);border-top:1px solid var(--bd2)">
-      Toca el diagrama para leer Re y f · Usa los sliders para calcular
+<div class="app-container">
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-logo">📈 Diagrama de Moody</div>
+      <div class="friction-display">Factor de Fricción (f): <span id="headerF">—</span></div>
     </div>
-  </div>
+    <button class="close-btn" onclick="window.close()">Cerrar ✕</button>
+  </header>
 
-  <!-- Sliders entrada -->
-  <div class="card">
-    <div class="sl-group">
-      <div class="sl-row">
-        <div class="sl-hdr">
-          <span class="sl-lbl">Diámetro D</span>
-          <span class="sl-val" id="vD" style="color:var(--accent)">— mm</span>
-        </div>
-        <input type="range" id="slD" min="10" max="1000" step="5" value="100">
+  <div class="main-content">
+    <div class="card-canvas">
+      <div class="canvas-wrapper">
+        <canvas id="moodyCvs"></canvas>
+        <div id="chartTooltip" class="tooltip"></div>
       </div>
-      <div class="sl-row">
-        <div class="sl-hdr">
-          <span class="sl-lbl">Velocidad v</span>
-          <span class="sl-val" id="vV" style="color:var(--purple)">— m/s</span>
-        </div>
-        <input type="range" id="slV" min="0.05" max="10" step="0.05" value="1.0">
+      <div style="padding-top: 4px; font-size: 10px; color: #8e8e93; text-align: center;">
+        Diagrama de Moody en tiempo real · Pasa el cursor sobre la gráfica para inspeccionar puntos
       </div>
-      <div class="sl-row">
-        <div class="sl-hdr">
-          <span class="sl-lbl">Rugosidad ε</span>
-          <span class="sl-val" id="vEps" style="color:var(--orange)">— mm</span>
+    </div>
+
+    <div class="controls-card">
+      <div class="controls-grid">
+        <div class="field-group">
+          <span class="field-label">Diámetro D</span>
+          <div class="input-row">
+            <input type="number" id="inpD" value="100" step="any">
+            <select id="unitD" style="width: 80px;">
+              <option value="mm" selected>mm</option>
+              <option value="m">m</option>
+              <option value="in">in</option>
+            </select>
+          </div>
         </div>
-        <input type="range" id="slEps" min="-6" max="-1" step="0.05" value="-3.336">
+
+        <div class="field-group">
+          <span class="field-label">Velocidad v</span>
+          <div class="input-row">
+            <input type="number" id="inpV" value="1.0" step="any">
+            <select id="unitV" style="width: 85px;">
+              <option value="ms" selected>m/s</option>
+              <option value="kmh">km/h</option>
+              <option value="fts">ft/s</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Rugosidad ε</span>
+          <div class="input-row">
+            <input type="number" id="inpEps" value="0.046" step="any">
+            <select id="unitEps" style="width: 80px;">
+              <option value="mm" selected>mm</option>
+              <option value="um">µm</option>
+              <option value="m">m</option>
+              <option value="in">in</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Material de la tubería</span>
+          <select id="selMat"></select>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Fluido</span>
+          <select id="selFluid"></select>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- PAGE: RESULTADOS -->
-<div class="page" data-page="resultados">
+<script>
+// --- CATÁLOGO AMPLIADO DE MATERIALES (ASME, EN, Fundición, Hormigón y Polímeros) ---
+const MATERIALS = [
+  // Aceros al Carbono (ASME)
+  { name: 'Acero Carbono ASME SA-53 Gr. B (Sin costura / Soldado)', eps: 0.046e-3 },
+  { name: 'Acero Carbono ASME SA-106 Gr. B (Alta Tª, Sin costura)', eps: 0.046e-3 },
+  { name: 'Acero Carbono ASME SA-333 Gr. 6 (Servicio a baja Tª)', eps: 0.046e-3 },
+  
+  // Aceros al Carbono (Normas Europeas EN)
+  { name: 'Acero Carbono EN 10216-1 P235TR1 (Uso general)', eps: 0.05e-3 },
+  { name: 'Acero Carbono EN 10216-2 P265GH (Recipientes a presión / Tª)', eps: 0.04e-3 },
+  { name: 'Acero Carbono EN 10216-2 P355NH (Grano fino normalizado)', eps: 0.04e-3 },
+  { name: 'Acero Galvanizado por inmersión en caliente', eps: 0.15e-3 },
 
-  <div class="sec">Punto de operación</div>
-  <div class="card" style="margin-bottom:14px">
-    <div class="rg">
-      <div class="rc">
-        <div class="rl">Reynolds Re</div>
-        <div class="rv" id="rRe" style="font-size:15px">—</div>
-        <div class="ru">adimensional</div>
-      </div>
-      <div class="rc">
-        <div class="rl">f Colebrook-White</div>
-        <div class="rv" id="rF" style="color:var(--accent)">—</div>
-        <div class="ru">Darcy</div>
-      </div>
-      <div class="rc" style="border-top:1px solid var(--bd2)">
-        <div class="rl">ε/D rugosidad rel.</div>
-        <div class="rv" id="rEpD" style="font-size:14px">—</div>
-        <div class="ru">adimensional</div>
-      </div>
-      <div class="rc" style="border-top:1px solid var(--bd2)">
-        <div class="rl">Velocidad</div>
-        <div class="rv" id="rVel">—</div>
-        <div class="ru">m/s</div>
-      </div>
-      <div class="rc" style="border-top:1px solid var(--bd2)">
-        <div class="rl">Caudal Q</div>
-        <div class="rv" id="rQ" style="font-size:14px">—</div>
-        <div class="ru">L/s</div>
-      </div>
-      <div class="rc" style="border-top:1px solid var(--bd2)">
-        <div class="rl">Régimen</div>
-        <div class="rv" id="rReg" style="font-size:13px">—</div>
-        <div class="ru">&nbsp;</div>
-      </div>
-    </div>
-  </div>
+  // Aceros Inoxidables (ASME Sec. II)
+  { name: 'Inoxidable Austenítico ASME SA-312 TP304 / 304L (Liso estirado)', eps: 0.0015e-3 },
+  { name: 'Inoxidable Austenítico ASME SA-312 TP316 / 316L (Liso estirado)', eps: 0.0015e-3 },
+  { name: 'Inoxidable Dúplex ASME SA-790 UNS S31803 / 2205', eps: 0.0015e-3 },
 
-  <div class="sec">Pérdida de carga (Darcy-Weisbach)</div>
-  <div class="card" style="margin-bottom:14px">
-    <div class="rg">
-      <div class="rc">
-        <div class="rl">hf por metro</div>
-        <div class="rv" id="rHfM">—</div>
-        <div class="ru">m/m</div>
-      </div>
-      <div class="rc">
-        <div class="rl">hf (L = 100 m)</div>
-        <div class="rv" id="rHf100">—</div>
-        <div class="ru">m columna</div>
-      </div>
-      <div class="rc" style="border-top:1px solid var(--bd2)">
-        <div class="rl">ΔP (L = 100 m)</div>
-        <div class="rv" id="rDP" style="font-size:14px">—</div>
-        <div class="ru">kPa</div>
-      </div>
-      <div class="rc" style="border-top:1px solid var(--bd2)">
-        <div class="rl">f·L/D</div>
-        <div class="rv" id="rFLD">—</div>
-        <div class="ru">adimensional</div>
-      </div>
-    </div>
-  </div>
+  // Aceros Inoxidables (Normas Europeas EN)
+  { name: 'Inoxidable EN 10217-7 1.4307 (AISI 304L soldado)', eps: 0.01e-3 },
+  { name: 'Inoxidable EN 10217-7 1.4404 (AISI 316L soldado)', eps: 0.01e-3 },
+  { name: 'Inoxidable Dúplex EN 10216-5 1.4462', eps: 0.01e-3 },
 
-  <div class="sec">Comparativa de correlaciones</div>
-  <div class="card" style="margin-bottom:14px;overflow-x:auto">
-    <table class="cmp-tbl">
-      <thead><tr>
-        <th>Correlación</th><th>f Darcy</th><th>Error vs C-W</th><th>Tipo</th>
-      </tr></thead>
-      <tbody id="cmpBody">
-        <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Ajusta los parámetros</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
+  // Fundición e Hierro
+  { name: 'Fundición gris (Nuevas condiciones)', eps: 0.25e-3 },
+  { name: 'Fundición dúctil (Revestimiento interior de mortero de cemento)', eps: 0.10e-3 },
+  { name: 'Hierro fundido asfaltado / revestido', eps: 0.12e-3 },
 
-<!-- PAGE: DATOS -->
-<div class="page" data-page="datos">
+  // Hormigón y Construcción
+  { name: 'Hormigón centrifugado / liso (colectores y saneamiento)', eps: 0.30e-3 },
+  { name: 'Hormigón en masa rugoso / prefabricado estándar', eps: 1.00e-3 },
 
-  <div class="sec">Material de la tubería</div>
-  <div class="card sel-card" style="margin-bottom:14px">
-    <div>
-      <div class="field-lbl">Seleccionar material</div>
-      <select class="ios-sel" id="selMat" onchange="onMat()"></select>
-    </div>
-    <div id="epsCustomRow" style="display:none">
-      <div class="field-lbl">Rugosidad absoluta ε [mm]</div>
-      <input class="ios-inp" type="number" id="epsCustom" step="0.001" value="0.046" oninput="onEpsCustom()">
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding-top:4px">
-      <span id="matEpsLabel">ε = —</span>
-      <span id="matEpsRel">ε/D = —</span>
-    </div>
-  </div>
+  // Plásticos y Polímeros Avanzados
+  { name: 'PVC-U (Policloruro de vinilo no plastificado)', eps: 0.0015e-3 },
+  { name: 'PP-H (Polipropileno homopolímero)', eps: 0.007e-3 },
+  { name: 'PP-R (Polipropileno random copolymer)', eps: 0.007e-3 },
+  { name: 'PVDF (Fluoruro de polivinilideno - Alta pureza/químico)', eps: 0.0010e-3 },
+  { name: 'PE (Polietileno genérico)', eps: 0.007e-3 },
+  { name: 'PE80 (Polietileno alta densidad)', eps: 0.005e-3 },
+  { name: 'PE100 (Polietileno alta densidad avanzado)', eps: 0.003e-3 },
+  { name: 'CPFV / PRFV (Poliéster reforzado con fibra de vidrio)', eps: 0.02e-3 },
 
-  <div class="sec">Fluido</div>
-  <div class="card sel-card" style="margin-bottom:14px">
-    <div>
-      <div class="field-lbl">Seleccionar fluido</div>
-      <select class="ios-sel" id="selFluid" onchange="onFluid()"></select>
-    </div>
-    <div id="fluidCustom" style="display:none">
-      <div class="field-row">
-        <div>
-          <div class="field-lbl">ρ densidad [kg/m³]</div>
-          <input class="ios-inp" type="number" id="rhoCustom" value="998" oninput="update()">
-        </div>
-        <div>
-          <div class="field-lbl">ν viscosidad [m²/s]</div>
-          <input class="ios-inp" type="number" id="nuCustom" step="1e-7" value="1.004e-6" oninput="update()">
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding-top:4px">
-      <span id="fluidRhoLabel">ρ = —</span>
-      <span id="fluidNuLabel">ν = —</span>
-    </div>
-  </div>
+  // Otros metálicos
+  { name: 'Cobre / Latón estirado de alta precisión', eps: 0.0015e-3 }
+];
 
-  <div class="sec">Longitud del tramo</div>
-  <div class="card sel-card" style="margin-bottom:14px">
-    <div>
-      <div class="field-lbl">Longitud L [m]</div>
-      <input class="ios-inp" type="number" id="lengthInp" value="100" oninput="update()">
-    </div>
-  </div>
-</div>
+// --- CATÁLOGO DE FLUIDOS ---
+const FLUIDS = [
+  { name: 'Agua (20 °C)', rho: 998.2, nu: 1.004e-6 },
+  { name: 'Agua (0 °C)', rho: 999.8, nu: 1.787e-6 },
+  { name: 'Agua (60 °C)', rho: 983.2, nu: 0.474e-6 },
+  { name: 'Aire comprimido (1 atm, 20 °C)', rho: 1.204, nu: 15.11e-6 },
+  { name: 'Aceite ligero', rho: 850.0, nu: 15e-6 },
+  { name: 'Aceite pesado / fuel-oil', rho: 940.0, nu: 100e-6 },
+  { name: 'Amoníaco verde', rho: 681.9, nu: 3.2e-7 },
+  { name: 'ATJ-SPK (derivado alcohol)', rho: 765.0, nu: 1.4e-6 },
+  { name: 'AVGAS 100LL (F-18)', rho: 715.0, nu: 0.85e-6 },
+  { name: 'Butano', rho: 573.0, nu: 0.25e-6 },
+  { name: 'CO₂ (Gas)', rho: 1.98, nu: 8.2e-6 },
+  { name: 'Diésel', rho: 832.0, nu: 3.4e-6 },
+  { name: 'Diésel marino MDO', rho: 890.0, nu: 6.0e-6 },
+  { name: 'F-54 (gasóleo OTAN)', rho: 840.0, nu: 3.5e-6 },
+  { name: 'F-65 (fuelóleo OTAN)', rho: 960.0, nu: 120e-6 },
+  { name: 'F-67 (fuelóleo OTAN)', rho: 950.0, nu: 90e-6 },
+  { name: 'F-75 (destilado naval, turbinas)', rho: 850.0, nu: 4.2e-6 },
+  { name: 'F-76 (destilado naval)', rho: 855.0, nu: 4.5e-6 },
+  { name: 'FT-SPK (Sintético)', rho: 755.0, nu: 1.3e-6 },
+  { name: 'Fueloil pesado', rho: 980.0, nu: 250e-6 },
+  { name: 'Gas natural / genérico', rho: 0.75, nu: 16e-6 },
+  { name: 'Gasóleo', rho: 845.0, nu: 3.6e-6 },
+  { name: 'Gasóleo B', rho: 845.0, nu: 3.6e-6 },
+  { name: 'Gasóleo C', rho: 890.0, nu: 8.0e-6 },
+  { name: 'Gasóleo marino MGO', rho: 860.0, nu: 4.0e-6 },
+  { name: 'Gasolina', rho: 740.0, nu: 0.6e-6 },
+  { name: 'GLP', rho: 540.0, nu: 0.23e-6 },
+  { name: 'GNL', rho: 450.0, nu: 0.35e-6 },
+  { name: 'HEFA-SPK (Biocombustible)', rho: 760.0, nu: 1.35e-6 },
+  { name: 'HFO', rho: 990.0, nu: 350e-6 },
+  { name: 'Jet A', rho: 804.0, nu: 1.5e-6 },
+  { name: 'Jet A-1 (F-35)', rho: 804.0, nu: 1.6e-6 },
+  { name: 'Jet Fuel (queroseno de aviación)', rho: 810.0, nu: 1.65e-6 },
+  { name: 'JP-1', rho: 815.0, nu: 1.7e-6 },
+  { name: 'JP-10', rho: 938.0, nu: 2.1e-6 },
+  { name: 'JP-2', rho: 810.0, nu: 1.6e-6 },
+  { name: 'JP-3', rho: 770.0, nu: 1.1e-6 },
+  { name: 'JP-4 (F-40)', rho: 762.0, nu: 1.0e-6 },
+  { name: 'JP-5 (F-44)', rho: 820.0, nu: 2.0e-6 },
+  { name: 'JP-6 (misiles)', rho: 812.0, nu: 1.6e-6 },
+  { name: 'JP-8 (F-34)', rho: 800.0, nu: 1.64e-6 },
+  { name: 'JP-8+100 (F-24)', rho: 800.0, nu: 1.64e-6 },
+  { name: 'JPTS', rho: 825.0, nu: 2.2e-6 },
+  { name: 'Metanol', rho: 792.0, nu: 0.75e-6 },
+  { name: 'Propano', rho: 500.0, nu: 0.22e-6 },
+  { name: 'Queroseno', rho: 810.0, nu: 1.6e-6 },
+  { name: 'RP-1 (China)', rho: 810.0, nu: 1.6e-6 },
+  { name: 'RP-2 (China)', rho: 812.0, nu: 1.6e-6 },
+  { name: 'RP-3 (China)', rho: 808.0, nu: 1.55e-6 },
+  { name: 'RP-5 (China)', rho: 822.0, nu: 1.9e-6 },
+  { name: 'SAF (Sustainable Aviation Fuel)', rho: 775.0, nu: 1.4e-6 },
+  { name: 'T-1', rho: 805.0, nu: 1.5e-6 },
+  { name: 'T-2', rho: 810.0, nu: 1.6e-6 },
+  { name: 'T-6', rho: 820.0, nu: 1.8e-6 },
+  { name: 'T-8V', rho: 815.0, nu: 1.7e-6 },
+  { name: 'TS-1 (TC-1) (Rusia)', rho: 780.0, nu: 1.3e-6 }
+];
 
-<!-- PAGE: INFO -->
-<div class="page" data-page="info">
-  <div class="sec">Zonas del diagrama</div>
-  <div class="card" style="margin-bottom:14px">
-    <div class="info-row">
-      <span class="ik">🟢 Laminar</span>
-      <span class="iv">Re &lt; 2 300 · f = 64/Re</span>
-    </div>
-    <div class="info-row">
-      <span class="ik">🟠 Transición</span>
-      <span class="iv">2 300 &lt; Re &lt; 4 000</span>
-    </div>
-    <div class="info-row">
-      <span class="ik">🔵 Turbulento</span>
-      <span class="iv">Re &gt; 4 000</span>
-    </div>
-    <div class="info-row">
-      <span class="ik">Zona rugosidad completa</span>
-      <span class="iv">f independiente de Re</span>
-    </div>
-  </div>
+// --- CÁLCULO COLEBROOK-WHITE Y HAALAND ---
+function calcFriction(Re, eps_D) {
+  if (Re <= 2300) {
+    return Re > 0 ? 64 / Re : 0.032;
+  }
+  let f = 0.02;
+  for (let i = 0; i < 15; i++) {
+    const term = eps_D / 3.7 + 2.51 / (Re * Math.sqrt(f));
+    const invSqrtF = -2.0 * Math.log10(term);
+    const fNew = 1 / (invSqrtF * invSqrtF);
+    if (Math.abs(fNew - f) < 1e-6) { f = fNew; break; }
+    f = fNew;
+  }
+  return isNaN(f) || f <= 0 ? 0.02 : f;
+}
 
-  <div class="sec">Correlaciones</div>
-  <div class="card" style="margin-bottom:14px">
-    <div class="info-title">Colebrook-White (1939) — referencia</div>
-    <div class="info-body">1/√f = −2·log₁₀(ε/D/3.7 + 2.51/(Re·√f))<br>Implícita, requiere iteración. Error &lt; 0.5%.</div>
-    <div class="info-title">Swamee-Jain (1976)</div>
-    <div class="info-body">f = 0.25 / [log₁₀(ε/D/3.7 + 5.74/Re⁰·⁹)]²<br>Explícita. Error &lt; 3% para Re: 5000–10⁸.</div>
-    <div class="info-title">Haaland (1983)</div>
-    <div class="info-body">1/√f = −1.8·log₁₀[(ε/D/3.7)^1.11 + 6.9/Re]<br>Explícita. Error &lt; 2%.</div>
-    <div class="info-title">Serghides (1984)</div>
-    <div class="info-body">Explícita de tres pasos. Error &lt; 0.003%.</div>
-    <div class="info-title">Churchill (1977)</div>
-    <div class="info-body">Válida para todo Re, incluyendo transición.</div>
-  </div>
-
-  <div class="sec">Darcy-Weisbach</div>
-  <div class="card" style="margin-bottom:14px">
-    <div class="info-body" style="padding-top:14px">
-      hf = f · (L/D) · v²/(2g)<br><br>
-      donde:<br>
-      • f = factor de fricción de Darcy<br>
-      • L = longitud del tramo [m]<br>
-      • D = diámetro interior [m]<br>
-      • v = velocidad media [m/s]<br>
-      • g = 9.81 m/s²
-    </div>
-  </div>
-
-  <div class="sec">Rugosidades típicas</div>
-  <div class="card" style="margin-bottom:24px">
-    <div class="info-row"><span class="ik">PVC / Cobre / Vidrio</span><span class="iv">~0.0015 mm</span></div>
-    <div class="info-row"><span class="ik">Acero comercial</span><span class="iv">0.046 mm</span></div>
-    <div class="info-row"><span class="ik">Acero galvanizado</span><span class="iv">0.15 mm</span></div>
-    <div class="info-row"><span class="ik">Hierro fundido</span><span class="iv">0.26 mm</span></div>
-    <div class="info-row"><span class="ik">Hormigón</span><span class="iv">0.3 – 3 mm</span></div>
-  </div>
-</div>
-
-<!-- NAV -->
-<nav class="nav">
-  <button class="nav-btn active" data-nav="diagrama"><span class="ico">📈</span><span>Diagrama</span></button>
-  <button class="nav-btn" data-nav="resultados"><span class="ico">🔢</span><span>Resultados</span></button>
-  <button class="nav-btn" data-nav="datos"><span class="ico">⚙️</span><span>Datos</span></button>
-  <button class="nav-btn" data-nav="info"><span class="ico">ℹ️</span><span>Info</span></button>
-</nav>
-
-<div class="toast" id="toast"></div>
-
-<script type="module">
-import { calcState, MATERIALS, FLUIDS, headLossDW, flowRate, velocity } from './js/engine.js';
-import { MoodyChart } from './js/chart.js';
-
-// ── CHART ─────────────────────────────────────────────────────────────────────
+// --- REFERENCIAS DOM ---
 const canvas = document.getElementById('moodyCvs');
-const chart  = new MoodyChart(canvas, onChartHover);
-chart.draw(null);
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('chartTooltip');
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-let D   = 0.100;           // m
-let v   = 1.0;             // m/s
-let eps = 0.046e-3;        // m (acero comercial)
-let nu  = 1.004e-6;        // m²/s
-let rho = 998.2;           // kg/m³
-let L   = 100;             // m
-let state = null;
-
-// ── SLIDERS ──────────────────────────────────────────────────────────────────
-const slD   = document.getElementById('slD');
-const slV   = document.getElementById('slV');
-const slEps = document.getElementById('slEps');
-
-function trackColor(sl, color) {
-  const pct = (sl.value - sl.min) / (sl.max - sl.min) * 100;
-  sl.style.background = `linear-gradient(to right,${color} ${pct}%,#e5e5ea ${pct}%)`;
-}
-
-function syncSliders() {
-  D   = parseFloat(slD.value) / 1000;
-  v   = parseFloat(slV.value);
-  eps = Math.pow(10, parseFloat(slEps.value));
-  document.getElementById('vD').textContent   = `${(D*1000).toFixed(0)} mm`;
-  document.getElementById('vV').textContent   = `${v.toFixed(2)} m/s`;
-  document.getElementById('vEps').textContent = `${(eps*1000).toExponential(2)} mm`;
-  trackColor(slD,   '#007aff');
-  trackColor(slV,   '#5856d6');
-  trackColor(slEps, '#ff9500');
-}
-
-slD.addEventListener('input',   () => { syncSliders(); update(); });
-slV.addEventListener('input',   () => { syncSliders(); update(); });
-slEps.addEventListener('input', () => { syncSliders(); update(); });
-
-// ── UPDATE ────────────────────────────────────────────────────────────────────
-function fmt(n, d=3) { return n != null && isFinite(n) ? n.toFixed(d) : '—'; }
-function fmtSci(n)   { return n != null && isFinite(n) ? (n < 0.01 ? n.toExponential(3) : n.toFixed(5)) : '—'; }
-
-function update() {
-  L   = parseFloat(document.getElementById('lengthInp').value) || 100;
-  const Re    = Math.abs(v) * D / nu;
-  const eps_D = eps / D;
-
-  state = calcState({ Re, eps_D, L, D, nu, rho, v, Q: flowRate(v, D) });
-
-  // Regime pill
-  const pill = document.getElementById('regimePill');
-  pill.textContent = state.regime.label;
-  pill.className   = `hdr-pill ${state.regime.short.toLowerCase()}`;
-
-  // Results page
-  document.getElementById('rRe').textContent   = Re.toExponential(3);
-  document.getElementById('rF').textContent    = fmtSci(state.f_cw);
-  document.getElementById('rEpD').textContent  = eps_D.toExponential(3);
-  document.getElementById('rVel').textContent  = fmt(state.vel, 3);
-  document.getElementById('rQ').textContent    = fmt(state.q * 1000, 3);
-  document.getElementById('rReg').textContent  = state.regime.label;
-
-  const hfM   = state.f_cw * v*v / (D * 2 * 9.81);
-  const hf100 = hfM * L;
-  const dP100 = hf100 * rho * 9.81 / 1000;
-  const fLD   = state.f_cw * L / D;
-  document.getElementById('rHfM').textContent   = fmt(hfM, 5);
-  document.getElementById('rHf100').textContent = fmt(hf100, 3);
-  document.getElementById('rDP').textContent    = fmt(dP100, 2);
-  document.getElementById('rFLD').textContent   = fmt(fLD, 2);
-
-  // Comparativa
-  const corrs = [
-    { name: 'Colebrook-White', f: state.f_cw,  err: 0,             tipo: 'Implícita',   ref: true },
-    { name: 'Serghides',       f: state.f_se,  err: state.err_se,  tipo: 'Explícita'  },
-    { name: 'Haaland',         f: state.f_ha,  err: state.err_ha,  tipo: 'Explícita'  },
-    { name: 'Swamee-Jain',     f: state.f_sj,  err: state.err_sj,  tipo: 'Explícita'  },
-    { name: 'Churchill',       f: state.f_ch,  err: state.err_ch,  tipo: 'Universal'  },
-  ];
-  document.getElementById('cmpBody').innerHTML = corrs.map(c => `
-    <tr${c.ref?' class="best"':''}>
-      <td style="font-weight:${c.ref?'700':'500'}">${c.name}</td>
-      <td>${fmtSci(c.f)}</td>
-      <td>${c.ref ? '<span class="err-pill err-ok">Referencia</span>' : errPill(c.err)}</td>
-      <td style="color:var(--muted);font-family:'DM Sans',sans-serif">${c.tipo}</td>
-    </tr>
-  `).join('');
-
-  // Datos tab — labels
-  document.getElementById('matEpsLabel').textContent = `ε = ${(eps*1000).toExponential(2)} mm`;
-  document.getElementById('matEpsRel').textContent   = `ε/D = ${eps_D.toExponential(3)}`;
-  document.getElementById('fluidRhoLabel').textContent = `ρ = ${rho} kg/m³`;
-  document.getElementById('fluidNuLabel').textContent  = `ν = ${nu.toExponential(3)} m²/s`;
-
-  // Chart point
-  chart.draw({ Re, f: state.f_cw, eps_D });
-}
-
-function errPill(e) {
-  const cls = e < 1 ? 'err-ok' : e < 3 ? 'err-warn' : 'err-bad';
-  return `<span class="err-pill ${cls}">${e.toFixed(3)}%</span>`;
-}
-
-// ── CHART HOVER ───────────────────────────────────────────────────────────────
-function onChartHover({ Re, f }) {
-  // Snap Re to nearest slider position
-  v = Re * nu / D;
-  slV.value = Math.min(Math.max(v, parseFloat(slV.min)), parseFloat(slV.max));
-  syncSliders();
-  update();
-}
-
-// ── MATERIALS ─────────────────────────────────────────────────────────────────
+const inpD = document.getElementById('inpD');
+const unitD = document.getElementById('unitD');
+const inpV = document.getElementById('inpV');
+const unitV = document.getElementById('unitV');
+const inpEps = document.getElementById('inpEps');
+const unitEps = document.getElementById('unitEps');
 const selMat = document.getElementById('selMat');
-MATERIALS.forEach((m, i) => {
-  const opt = document.createElement('option'); opt.value = i; opt.textContent = m.name; selMat.appendChild(opt);
-});
-
-window.onMat = function() {
-  const m = MATERIALS[parseInt(selMat.value)];
-  if (m.eps !== null) {
-    eps = m.eps;
-    // Sync slider: log10(eps)
-    slEps.value = Math.log10(eps);
-    document.getElementById('epsCustomRow').style.display = 'none';
-  } else {
-    document.getElementById('epsCustomRow').style.display = 'block';
-  }
-  syncSliders(); update();
-};
-
-window.onEpsCustom = function() {
-  const val = parseFloat(document.getElementById('epsCustom').value);
-  if (val > 0) { eps = val / 1000; slEps.value = Math.log10(eps); syncSliders(); update(); }
-};
-
-// ── FLUIDS ────────────────────────────────────────────────────────────────────
 const selFluid = document.getElementById('selFluid');
-FLUIDS.forEach((f, i) => {
-  const opt = document.createElement('option'); opt.value = i; opt.textContent = f.name; selFluid.appendChild(opt);
+const headerF = document.getElementById('headerF');
+
+let currentRe = 0, currentF = 0, currentEpsD = 0;
+let lastHoverData = null;
+
+// Rellenar desplegables de materiales
+MATERIALS.forEach((m, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = m.name;
+  selMat.appendChild(opt);
 });
 
-window.onFluid = function() {
-  const f = FLUIDS[parseInt(selFluid.value)];
-  if (f.nu !== null) {
-    nu = f.nu; rho = f.rho;
-    document.getElementById('fluidCustom').style.display = 'none';
-  } else {
-    document.getElementById('fluidCustom').style.display = 'block';
-    nu  = parseFloat(document.getElementById('nuCustom').value)  || nu;
-    rho = parseFloat(document.getElementById('rhoCustom').value) || rho;
+// Rellenar desplegables de fluidos
+FLUIDS.forEach((f, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = f.name;
+  selFluid.appendChild(opt);
+});
+
+function getD() {
+  const v = parseFloat(inpD.value) || 0;
+  const u = unitD.value;
+  return u === 'mm' ? v / 1000 : u === 'in' ? v * 0.0254 : v;
+}
+
+function getV() {
+  const v = parseFloat(inpV.value) || 0;
+  const u = unitV.value;
+  return u === 'kmh' ? v / 3.6 : u === 'fts' ? v * 0.3048 : v;
+}
+
+function getEps() {
+  const v = parseFloat(inpEps.value) || 0;
+  const u = unitEps.value;
+  return u === 'um' ? v / 1e6 : u === 'mm' ? v / 1000 : u === 'in' ? v * 0.0254 : v;
+}
+
+function getNu() {
+  const idx = parseInt(selFluid.value) || 0;
+  return FLUIDS[idx].nu;
+}
+
+function updateValues() {
+  const D = getD();
+  const v = getV();
+  const eps = getEps();
+  const nu = getNu();
+
+  currentRe = D > 0 && nu > 0 ? (Math.abs(v) * D) / nu : 4000;
+  currentEpsD = D > 0 ? eps / D : 0.001;
+  currentF = calcFriction(currentRe, currentEpsD);
+
+  headerF.textContent = currentF.toFixed(5);
+  drawMoodyChart();
+}
+
+// --- RENDERIZADO DEL DIAGRAMA DE MOODY EN CANVAS ---
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  drawMoodyChart();
+}
+
+function drawMoodyChart() {
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+  if (w <= 0 || h <= 0) return;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const padL = 60, padR = 30, padT = 30, padB = 40;
+  const chartW = w - padL - padR;
+  const chartH = h - padT - padB;
+
+  const logReMin = Math.log10(600), logReMax = Math.log10(1e8);
+  const fMin = 0.008, fMax = 0.10;
+
+  function toX(re) {
+    const logRe = Math.log10(Math.max(600, Math.min(1e8, re)));
+    return padL + ((logRe - logReMin) / (logReMax - logReMin)) * chartW;
   }
-  update();
-};
 
-document.getElementById('rhoCustom').addEventListener('input', () => { rho = parseFloat(document.getElementById('rhoCustom').value)||rho; update(); });
-document.getElementById('nuCustom').addEventListener('input',  () => { nu  = parseFloat(document.getElementById('nuCustom').value) ||nu;  update(); });
-document.getElementById('lengthInp').addEventListener('input', update);
+  function toY(f) {
+    const lF = Math.log10(Math.max(fMin, Math.min(fMax, f)));
+    const lMin = Math.log10(fMin), lMax = Math.log10(fMax);
+    return padT + chartH - ((lF - lMin) / (lMax - lMin)) * chartH;
+  }
 
-// ── NAV ───────────────────────────────────────────────────────────────────────
-document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => {
-  const t = btn.dataset.nav;
-  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page===t));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b===btn));
-}));
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(padL, padT, chartW, chartH);
+  ctx.strokeStyle = '#e5e5ea';
+  ctx.lineWidth = 1;
 
-// ── RESIZE ────────────────────────────────────────────────────────────────────
-window.addEventListener('resize', () => { chart.resize(); chart.draw(state ? { Re: state.vel*D/nu, f: state.f_cw } : null); });
+  const reTicks = [1e3, 1e4, 1e5, 1e6, 1e7, 1e8];
+  reTicks.forEach(re => {
+    const x = toX(re);
+    ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + chartH); ctx.stroke();
+    ctx.fillStyle = '#8e8e93'; ctx.font = '10px "DM Sans"'; ctx.textAlign = 'center';
+    ctx.fillText(re.toExponential(0), x, padT + chartH + 14);
+  });
 
-// ── SW ────────────────────────────────────────────────────────────────────────
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  const fTicks = [0.01, 0.02, 0.04, 0.06, 0.08, 0.10];
+  fTicks.forEach(f => {
+    const y = toY(f);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
+    ctx.fillStyle = '#8e8e93'; ctx.font = '10px "DM Sans"'; ctx.textAlign = 'right';
+    ctx.fillText(f.toFixed(2), padL - 8, y + 3);
+  });
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-syncSliders();
-update();
+  const roughnessCurves = [0, 1e-5, 5e-5, 1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 0.01, 0.02, 0.04, 0.05];
+  roughnessCurves.forEach(ed => {
+    ctx.beginPath();
+    ctx.strokeStyle = ed === 0 ? '#007aff' : '#aeaeb2';
+    ctx.lineWidth = ed === 0 ? 2 : 1;
+    let started = false;
+    for (let re = 600; re <= 1e8; re *= 1.2) {
+      const fVal = calcFriction(re, ed);
+      const x = toX(re), y = toY(fVal);
+      if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+    }
+    ctx.stroke();
+  });
+
+  ctx.beginPath();
+  let lamStarted = false;
+  for (let re = 600; re <= 2300; re *= 1.1) {
+    const fVal = 64 / re;
+    const x = toX(re), y = toY(fVal);
+    if (!lamStarted) { ctx.moveTo(x, y); lamStarted = true; } else { ctx.lineTo(x, y); }
+  }
+  ctx.strokeStyle = '#34c759'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  const px = toX(currentRe);
+  const py = toY(currentF);
+
+  ctx.beginPath();
+  ctx.arc(px, py, 7, 0, 2 * Math.PI);
+  ctx.fillStyle = '#ff3b30';
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+
+  lastHoverData = { x: px, y: py, Re: currentRe, f: currentF, eps_D: currentEpsD };
+}
+
+[inpD, unitD, inpV, unitV, inpEps, unitEps].forEach(el => {
+  el.addEventListener('input', updateValues);
+  el.addEventListener('change', updateValues);
+});
+
+selMat.addEventListener('change', () => {
+  const m = MATERIALS[parseInt(selMat.value)];
+  if (m) {
+    inpEps.value = (m.eps * 1000).toFixed(4);
+    unitEps.value = 'mm';
+    updateValues();
+  }
+});
+
+selFluid.addEventListener('change', updateValues);
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  if (lastHoverData) {
+    const dist = Math.hypot(mouseX - lastHoverData.x, mouseY - lastHoverData.y);
+    if (dist < 25) {
+      tooltip.style.display = 'block';
+      tooltip.style.left = `${lastHoverData.x + 15}px`;
+      tooltip.style.top = `${lastHoverData.y + 15}px`;
+      tooltip.innerHTML = `<b>Punto de operación</b><br>Re: ${lastHoverData.Re.toExponential(2)}<br>f: ${lastHoverData.f.toFixed(5)}<br>ε/D: ${lastHoverData.eps_D.toExponential(2)}`;
+      return;
+    }
+  }
+  tooltip.style.display = 'none';
+});
+
+canvas.addEventListener('mouseleave', () => {
+  tooltip.style.display = 'none';
+});
+
+window.addEventListener('resize', resizeCanvas);
+
+resizeCanvas();
+updateValues();
 </script>
 </body>
 </html>
